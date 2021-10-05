@@ -47,10 +47,19 @@ def generate_gold(lanes):
     return Gold(lane + lane_width/2)
 
 
+def draw_text(window, text, color, size, position):
+    _font = pygame.font.SysFont("Arial", size)
+    _text = _font.render(str(text), True, color)
+    window.blit(_text, position)
+
+
 if __name__ == '__main__':
     WIDTH = 800
     HEIGHT = 900
     FPS = 60
+
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
 
     window = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -64,12 +73,13 @@ if __name__ == '__main__':
 
     spawn_cooldown = 120
     spawn_timer = 0
+    score = 0
 
     running = True
     while running:
         dt = clock.tick(FPS) / 1000
 
-        window.fill((0, 0, 0))
+        window.fill(BLACK)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -115,12 +125,13 @@ if __name__ == '__main__':
             collide_index = gold.collide([catcher.get_rect() for catcher in catchers])
             if collide_index != -1 and catchers[collide_index].is_active:
                 print("Collide!")
+                score += 1
                 golds.remove(gold)
 
             if gold.y > HEIGHT:
                 print("Removed!")
                 golds.remove(gold)
-
+        draw_text(window, f"Score: {score}", WHITE, 24, (10, 10))
         pygame.display.update()
 
     pygame.quit()
