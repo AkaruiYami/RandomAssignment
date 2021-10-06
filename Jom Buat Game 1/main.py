@@ -31,9 +31,10 @@ class Gold:
         self.height = 32
         self.x = x - self.width / 2
         self.y = 0
+        self.speed = 100
 
     def update(self, deltatime):
-        self.y += 100 * deltatime
+        self.y += self.speed * deltatime
 
     def draw(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.height))
@@ -47,10 +48,10 @@ def generate_gold(lanes):
     return Gold(lane + lane_width/2)
 
 
-def draw_text(window, text, color, size, position):
+def create_text(text, color, size):
     _font = pygame.font.SysFont("Arial", size)
     _text = _font.render(str(text), True, color)
-    window.blit(_text, position)
+    return _text
 
 
 if __name__ == '__main__':
@@ -73,8 +74,10 @@ if __name__ == '__main__':
 
     spawn_cooldown = 120
     spawn_timer = 0
-    score = 0
+    score = 120
+    lives = 1
 
+    game_state = "Game Running"
     running = True
     while running:
         dt = clock.tick(FPS) / 1000
@@ -84,54 +87,75 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 running = False
 
-        key_pressed = pygame.key.get_pressed()
-        if active_catcher is None:
-            if key_pressed[pygame.K_q]:
-                active_catcher = catchers[0]
-            elif key_pressed[pygame.K_w]:
-                active_catcher = catchers[1]
-            elif key_pressed[pygame.K_e]:
-                active_catcher = catchers[2]
-            elif key_pressed[pygame.K_r]:
-                active_catcher = catchers[3]
-        else:
-            active_catcher.toggle(True)
+        if game_state == "Game Running":
+            key_pressed = pygame.key.get_pressed()
+            if active_catcher is None:
+                if key_pressed[pygame.K_q]:
+                    active_catcher = catchers[0]
+                elif key_pressed[pygame.K_w]:
+                    active_catcher = catchers[1]
+                elif key_pressed[pygame.K_e]:
+                    active_catcher = catchers[2]
+                elif key_pressed[pygame.K_r]:
+                    active_catcher = catchers[3]
+            else:
+                active_catcher.toggle(True)
 
-        if not key_pressed[pygame.K_q] and active_catcher == catchers[0]:
-            active_catcher.toggle(False)
-            active_catcher = None
-        elif not key_pressed[pygame.K_w] and active_catcher == catchers[1]:
-            active_catcher.toggle(False)
-            active_catcher = None
-        elif not key_pressed[pygame.K_e] and active_catcher == catchers[2]:
-            active_catcher.toggle(False)
-            active_catcher = None
-        elif not key_pressed[pygame.K_r] and active_catcher == catchers[3]:
-            active_catcher.toggle(False) 
-            active_catcher = None
+            if not key_pressed[pygame.K_q] and active_catcher == catchers[0]:
+                active_catcher.toggle(False)
+                active_catcher = None
+            elif not key_pressed[pygame.K_w] and active_catcher == catchers[1]:
+                active_catcher.toggle(False)
+                active_catcher = None
+            elif not key_pressed[pygame.K_e] and active_catcher == catchers[2]:
+                active_catcher.toggle(False)
+                active_catcher = None
+            elif not key_pressed[pygame.K_r] and active_catcher == catchers[3]:
+                active_catcher.toggle(False) 
+                active_catcher = None
 
-        spawn_timer += 1
-        if spawn_timer == spawn_cooldown:
-            golds.append(generate_gold(lanes))
-            spawn_timer = 0
+            spawn_timer += 1
+            if spawn_timer == spawn_cooldown:
+                golds.append(generate_gold(lanes))
+                spawn_timer = 0
 
-        for catcher in catchers:
-            catcher.draw(window)
+            for catcher in catchers:
+                catcher.draw(window)
 
-        for gold in golds:
-            gold.update(dt)
-            gold.draw(window)
+            for gold in golds:
+                gold.update(dt)
+                gold.draw(window)
+                
+                collide_index = gold.collide([catcher.get_rect() for catcher in catchers])
+                if collide_index != -1 and catchers[collide_index].is_active:
+                    print("Collide!")
+                    score += 1
+                    golds.remove(gold)
+
+                if gold.y > HEIGHT:
+                    print("Removed!")
+                    lives -= 1
+                    golds.remove(gold)
+
+            if lives == 0:
+                game_state = "Game Over"
+
+            score_text = create_text(f"Score: {score}", WHITE, 24)
+            window.blit(score_text, (10, 10))
+        elif game_state == "Game Over":
+            _score_title = create_text("SCORE", WHITE, 56)
+            _score_label = create_text(score, WHITE, 34)
+
+            _score_title_position = _score_title.get_rect(center=(WIDTH/2, HEIGHT/2 - 56))
+            _score_label_position = _score_label.get_rect(center=(WIDTH/2, HEIGHT/2 + 34))
             
-            collide_index = gold.collide([catcher.get_rect() for catcher in catchers])
-            if collide_index != -1 and catchers[collide_index].is_active:
-                print("Collide!")
-                score += 1
-                golds.remove(gold)
+            window.blit(_score_title, _score_title_position)
+            window.blit(_score_label, _score_label_position)
 
-            if gold.y > HEIGHT:
-                print("Removed!")
-                golds.remove(gold)
-        draw_text(window, f"Score: {score}", WHITE, 24, (10, 10))
         pygame.display.update()
+
+       
+
+
 
     pygame.quit()
