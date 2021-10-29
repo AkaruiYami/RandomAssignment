@@ -74,8 +74,8 @@ if __name__ == '__main__':
 
     spawn_cooldown = 120
     spawn_timer = 0
-    score = 120
-    lives = 1
+    score = 0
+    lives = 3
 
     game_state = "Game Running"
     running = True
@@ -141,7 +141,9 @@ if __name__ == '__main__':
                 game_state = "Game Over"
 
             score_text = create_text(f"Score: {score}", WHITE, 24)
+            live_text = create_text(f"Lives: {lives}", WHITE, 24)
             window.blit(score_text, (10, 10))
+            window.blit(live_text, (200, 10))
         elif game_state == "Game Over":
             _score_title = create_text("SCORE", WHITE, 56)
             _score_label = create_text(score, WHITE, 34)
